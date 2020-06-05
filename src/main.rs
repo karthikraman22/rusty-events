@@ -25,19 +25,21 @@ async fn hello() -> impl Responder {
     HttpResponse::Ok().body(response)
 }
 
-use gateway;
+pub mod config;
+pub mod gateway;
+pub mod transport;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
-
-    let cfg = gateway::Config{listen_address: "", port:8088};
+    let cfg = config::Config::load();
+    let gw = gateway::bootstrap(&cfg);
 
     HttpServer::new(|| {
         App::new()
             .route("/", web::get().to(index))
             .route("/hello", web::get().to(hello))
     })
-    .bind("0.0.0.0:8088")?
+    .bind(cfg.bind_address())?
     .run()
     .await
 }
